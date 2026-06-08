@@ -1,4 +1,4 @@
-﻿import io
+import io
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
