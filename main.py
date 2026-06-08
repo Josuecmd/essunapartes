@@ -1,10 +1,9 @@
 import io
-from typing import List, Optional
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import StreamingResponse
-from fastapi.responses import HTMLResponse
+import os
+from typing import List
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
 from pydantic import BaseModel, Field
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -15,7 +14,6 @@ app = FastAPI(
     description="Backend para el conteo, control nominal y exportación del parte militar.",
     version="1.0.0"
 )
-import os
 
 templates = Jinja2Templates(directory="templates")
 
@@ -31,14 +29,21 @@ SECCIONES_VALIDAS = [
     "Cuarto Año Alfa", "Cuarto Año Bravo", "Cuarto Año Abastecimientos"
 ]
 
-ESTADOS_VALIDOS = ["FILA", "COMISIÓN", "EXC. LITERA", "EXC. FORMACIÓN", "EXC. POR REVALIDAR", "DESCANSO DOMICILIO" "", "DESCANSO DOMICILIO" "EXC. POR REVALIDAR", "DESCANSO DOMICILIO"]
+ESTADOS_VALIDOS = [
+    "FILA", 
+    "COMISIÓN", 
+    "EXC. LITERA", 
+    "EXC. FORMACIÓN", 
+    "EXC. POR REVALIDAR", 
+    "DESCANSO DOMICILIO"
+]
 
 # --- MODELOS DE DATOS (PYDANTIC) ---
 class Guardiamarina(BaseModel):
     id: int
     nombre: str = Field(..., example="Guardiamarina Juan Pérez")
     seccion: str = Field(..., example="Primer Año Alfa")
-    estado: str = Field(default="Presente", example="Presente")
+    estado: str = Field(default="FILA", example="FILA")
 
 class ParteRequest(BaseModel):
     nombre_archivo: str = Field(default="Parte_General_Brigada", example="Parte_Diario_07_Junio")
@@ -46,40 +51,31 @@ class ParteRequest(BaseModel):
 
 # --- FUNCIONES DE PROCESAMIENTO Y FORMATEO ---
 def generar_excel_profesional(df_nominal: pd.DataFrame, df_resumen: pd.DataFrame) -> io.BytesIO:
-    """
-    Toma los DataFrames procesados y crea un archivo Excel en memoria 
-    aplicando estilos, colores institucionales, bordes y auto-ajuste de celdas.
-    """
     output = io.BytesIO()
     
-    # Escribir ambas tablas en diferentes pestañas del mismo archivo
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df_resumen.to_excel(writer, sheet_name='Resumen Numérico', index=True)
         df_nominal.to_excel(writer, sheet_name='Listado Nominal', index=False)
         
-        # Obtener acceso a las hojas para darles formato estilo "Excel Profesional"
         workbook = writer.book
         
         # 1. Formatear pestaña de Resumen Numérico (El Parte Cuadrado)
         ws_resumen = workbook['Resumen Numérico']
         ws_resumen.views.sheetView[0].showGridLines = True
         
-        # Estilos
         font_header = Font(name='Arial', size=11, bold=True, color='FFFFFF')
         font_body = Font(name='Arial', size=10)
         font_total = Font(name='Arial', size=10, bold=True)
         
-        fill_header = PatternFill(start_color='1F497D', end_color='1F497D', fill_type='solid') # Azul Marino
-        fill_total_row = PatternFill(start_color='DCE6F1', end_color='DCE6F1', fill_type='solid') # Azul Claro
+        fill_header = PatternFill(start_color='1F497D', end_color='1F497D', fill_type='solid') 
+        fill_total_row = PatternFill(start_color='DCE6F1', end_color='DCE6F1', fill_type='solid') 
         
         border_thin = Side(border_style="thin", color="D9D9D9")
         border_double = Side(border_style="double", color="000000")
-        border_thick = Side(border_style="medium", color="000000")
         
         box_border = Border(left=border_thin, right=border_thin, top=border_thin, bottom=border_thin)
         total_border = Border(top=border_thin, bottom=border_double)
 
-        # Aplicar a encabezados
         ws_resumen['A1'] = "Secciones / Cursos"
         for col in range(1, ws_resumen.max_column + 1):
             cell = ws_resumen.cell(row=1, column=col)
@@ -87,7 +83,6 @@ def generar_excel_profesional(df_nominal: pd.DataFrame, df_resumen: pd.DataFrame
             cell.fill = fill_header
             cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
 
-        # Aplicar a cuerpo y totales
         for row in range(2, ws_resumen.max_row + 1):
             is_total_row = (ws_resumen.cell(row=row, column=1).value == "TOTAL GENERAL")
             for col in range(1, ws_resumen.max_column + 1):
@@ -103,7 +98,6 @@ def generar_excel_profesional(df_nominal: pd.DataFrame, df_resumen: pd.DataFrame
                 else:
                     cell.alignment = Alignment(horizontal='left')
 
-        # Auto-ajustar ancho de columnas
         for col in ws_resumen.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
             col_letter = get_column_letter(col[0].column)
@@ -140,37 +134,32 @@ async def procesar_y_exportar_parte(request: ParteRequest):
     if not request.brigada:
         raise HTTPException(status_code=400, detail="La lista de la brigada no puede estar vacía.")
 
-    # 1. Convertir la entrada a un DataFrame de Pandas para manipulación ágil
-    datos_nominales = [g.dict() for g in request.brigada]
+    # 1. Convertir la entrada usando model_dump() (Pydantic v2 compatible)
+    datos_nominales = [g.model_dump() for g in request.brigada]
     df_nominal = pd.DataFrame(datos_nominales)
 
-    # Validar que no existan secciones o estados extraños fuera del reglamento
+    # Validar Secciones Coherentes
     secciones_invalidas = set(df_nominal['seccion']) - set(SECCIONES_VALIDAS)
     if secciones_invalidas:
         raise HTTPException(status_code=400, detail=f"Secciones no válidas detectadas: {list(secciones_invalidas)}")
 
-    # 2. Construir la Matriz del Parte Numérico usando Tablas Dinámicas (Pivot Table)
-    # Inicializamos una matriz vacía estructurada con ceros para garantizar que figuren todas las secciones y estados
-    matriz_base = pd.DataFrame(0, index=SECCIONES_VALIDAS, columns=ESTADOS_VALIDOS)
-    
-    # Calcular las frecuencias reales del listado nominal enviado
+    # NUEVO: Validar Estados Coherentes (Evita descuadres)
+    estados_invalidos = set(df_nominal['estado']) - set(ESTADOS_VALIDOS)
+    if estados_invalidos:
+        raise HTTPException(status_code=400, detail=f"Estados de novedad no válidos detectados: {list(estados_invalidos)}")
+
+    # 2. Construir la Matriz del Parte Numérico
     conteo_real = df_nominal.groupby(['seccion', 'estado']).size().unstack(fill_value=0)
-    
-    # Combinar e integrar los conteos reales sobre nuestra matriz estructurada militar
     matriz_final = conteo_real.reindex(index=SECCIONES_VALIDAS, columns=ESTADOS_VALIDOS, fill_value=0)
     
-    # 3. Fórmulas de Cuadre: Calcular Totales Horizontales (Total Alta por Sección)
+    # 3. Fórmulas de Cuadre Horizontales y Verticales
     matriz_final['TOTAL ALTA'] = matriz_final.sum(axis=1)
-    
-    # 4. Fórmulas de Cuadre: Calcular Totales Verticales (Total de la Brigada por Estado)
     matriz_final.loc['TOTAL GENERAL'] = matriz_final.sum(axis=0)
 
-    # 5. Generar el binario del archivo Excel aplicando las reglas estéticas
+    # 4. Generar el binario del archivo Excel
     excel_binario = generar_excel_profesional(df_nominal, matriz_final)
-    
     nombre_descarga = f"{request.nombre_archivo.replace(' ', '_')}.xlsx"
     
-    # 6. Responder con un flujo de archivo descargable en tiempo real
     return StreamingResponse(
         excel_binario,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -180,4 +169,3 @@ async def procesar_y_exportar_parte(request: ParteRequest):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
-    

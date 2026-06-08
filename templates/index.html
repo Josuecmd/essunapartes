@@ -29,6 +29,7 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         }
         .header h1 { margin: 0; font-size: 24px; letter-spacing: 0.5px; }
+        .header p { margin: 5px 0 0 0; opacity: 0.8; font-size: 13px; }
         .container {
             max-width: 1200px;
             margin: 30px auto;
@@ -46,6 +47,7 @@
             padding: 25px;
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
             border: 1px solid #e2e8f0;
+            height: fit-content;
         }
         .stats-grid {
             display: grid;
@@ -62,17 +64,18 @@
         }
         .stat-card.success { border-left-color: var(--success); }
         .stat-card.danger { border-left-color: var(--danger); }
-        .stat-number { font-size: 20px; font-weight: bold; color: var(--secondary); }
-        .stat-label { font-size: 12px; color: #64748b; }
+        .stat-number { font-size: 22px; font-weight: bold; color: var(--secondary); }
+        .stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; }
         .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: var(--primary); }
         input, select {
-            width: 100%; padding: 10px; border: 1px solid #cbd5e1;
-            border-radius: 6px; box-sizing: border-box; font-size: 14px;
+            width: 100%; padding: 11px; border: 1px solid #cbd5e1;
+            border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #fff;
         }
+        input:focus, select:focus { outline: none; border-color: var(--accent); }
         .btn {
             background-color: var(--accent); color: white; border: none;
-            padding: 12px; font-size: 14px; font-weight: 600;
+            padding: 13px; font-size: 14px; font-weight: 600;
             border-radius: 6px; cursor: pointer; width: 100%;
             transition: background 0.2s; display: flex;
             justify-content: center; align-items: center; gap: 8px;
@@ -83,62 +86,83 @@
         table {
             width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px;
         }
-        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f1f5f9; color: var(--primary); }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f1f5f9; color: var(--primary); font-weight: 600; }
         .status-badge {
-            padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+            padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: bold; display: inline-block;
         }
         .badge-fila { background: #dcfce7; color: #15803d; }
         .badge-comision { background: #dbeafe; color: #1e40af; }
-        .badge-other { background: #f1f5f9; color: #475569; }
+        .badge-other { background: #fef3c7; color: #d97706; }
+        .status-container { margin-top: 15px; display: none; padding: 12px; border-radius: 6px; font-size: 13px; }
+        .status-loading { background: #eff6ff; color: #1d4ed8; }
     </style>
 </head>
 <body>
 
     <div class="header">
         <h1><i class="fa-solid fa-shield-halved"></i> TABLERO DE CONTROL DE PARTES</h1>
+        <p>Brigada de Guardiamarinas | Sistema Integrado de Fuerza General</p>
     </div>
 
     <div class="container">
         <div class="card">
-            <h3><i class="fa-user-plus"></i> Registrar Novedad</h3>
+            <h3><i class="fa-solid fa-user-plus"></i> Registrar Novedad</h3>
+            
             <div class="form-group">
-                <label>Nombre del Alumno</label>
-                <input type="text" id="alumnoNombre" placeholder="Ej: Juan Pérez">
+                <label>Nombre y Apellido</label>
+                <input type="text" id="alumnoNombre" placeholder="Ej: G/M Juan Pérez">
             </div>
+            
             <div class="form-group">
-                <label>Sección</label>
+                <label>Sección / Curso</label>
                 <select id="alumnoSeccion">
                     <option value="Primer Año Alfa">Primer Año Alfa</option>
                     <option value="Primer Año Bravo">Primer Año Bravo</option>
+                    <option value="Primer Año Charlie">Primer Año Charlie</option>
+                    <option value="Primer Año Delta">Primer Año Delta</option>
+                    <option value="Primer Año Echo">Primer Año Echo</option>
                     <option value="Segundo Año Alfa">Segundo Año Alfa</option>
+                    <option value="Segundo Año Bravo">Segundo Año Bravo</option>
+                    <option value="Tercer Año Alfa">Tercer Año Alfa</option>
+                    <option value="Tercer Año Bravo">Tercer Año Bravo</option>
+                    <option value="Tercer Año Abastecimientos">Tercer Año Abastecimientos</option>
+                    <option value="Cuarto Año Alfa">Cuarto Año Alfa</option>
+                    <option value="Cuarto Año Bravo">Cuarto Año Bravo</option>
+                    <option value="Cuarto Año Abastecimientos">Cuarto Año Abastecimientos</option>
                 </select>
             </div>
+            
             <div class="form-group">
-                <label>Estado</label>
+                <label>Estado de Fuerza</label>
                 <select id="alumnoEstado">
-                    <option value="FILA">FILA</option>
+                    <option value="FILA">FILA (Presente)</option>
                     <option value="COMISIÓN">COMISIÓN</option>
                     <option value="EXC. LITERA">EXC. LITERA</option>
                     <option value="EXC. FORMACIÓN">EXC. FORMACIÓN</option>
+                    <option value="EXC. POR REVALIDAR">EXC. POR REVALIDAR</option>
+                    <option value="DESCANSO DOMICILIO">DESCANSO DOMICILIO</option>
                 </select>
             </div>
-            <button class="btn" onclick="agregarAlumno()"><i class="fa-solid fa-plus"></i> Insertar al Parte</button>
+            
+            <button class="btn" onclick="agregarAlumno()"><i class="fa-solid fa-plus"></i> Insertar a la Lista</button>
             
             <hr style="margin: 25px 0; border: 0; border-top: 1px solid #e2e8f0;">
             
             <div class="form-group">
-                <label>Nombre del Archivo Excel</label>
+                <label>Nombre del Documento de Salida</label>
                 <input type="text" id="fileName" value="Parte_General_Brigada">
             </div>
-            <button class="btn btn-success" onclick="exportarParte()"><i class="fa-solid fa-file-excel"></i> Exportar a Excel</button>
+            
+            <button class="btn btn-success" onclick="exportarParte()"><i class="fa-solid fa-file-excel"></i> Generar y Cuadrar Excel</button>
+            <div id="statusBox" class="status-container status-loading"></div>
         </div>
 
         <div class="card">
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number" id="totalAlumnos">0</div>
-                    <div class="stat-label">Total Fuerza</div>
+                    <div class="stat-label">Alta General</div>
                 </div>
                 <div class="stat-card success">
                     <div class="stat-number" id="totalFila">0</div>
@@ -151,18 +175,25 @@
             </div>
 
             <h3><i class="fa-solid fa-list-check"></i> Fuerza Nominal Existente</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nombre</th>
-                        <th>Sección</th>
-                        <th>Estado</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaAlumnos">
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Sección / Curso</th>
+                            <th>Estado</th>
+                            <th style="text-align: center;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaAlumnos">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">
+                                No hay personal registrado en el parte actual.
+                            </td>
+                        </tr>
                     </tbody>
-            </table>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -177,11 +208,14 @@
         }
 
         function agregarAlumno() {
-            const nombre = document.getElementById('alumnoNombre').value;
+            const nombre = document.getElementById('alumnoNombre').value.trim();
             const seccion = document.getElementById('alumnoSeccion').value;
             const estado = document.getElementById('alumnoEstado').value;
 
-            if (!nombre) return alert("Por favor ingresa el nombre");
+            if (!nombre) {
+                alert("Por favor, ingrese el nombre del guardiamarina.");
+                return;
+            }
 
             const nuevo = { id: listaGuardiamarinas.length + 1, nombre, seccion, estado };
             listaGuardiamarinas.push(nuevo);
@@ -197,15 +231,28 @@
 
         function renderTabla() {
             const tbody = document.getElementById('tablaAlumnos');
+            if (listaGuardiamarinas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">No hay personal registrado en el parte actual.</td></tr>`;
+                actualizarContadores();
+                return;
+            }
+
             tbody.innerHTML = '';
             listaGuardiamarinas.forEach(a => {
-                const badgeClass = a.estado === 'FILA' ? 'badge-fila' : (a.estado === 'COMISIÓN' ? 'badge-comision' : 'badge-other');
+                let badgeClass = 'badge-other';
+                if (a.estado === 'FILA') badgeClass = 'badge-fila';
+                if (a.estado === 'COMISIÓN') badgeClass = 'badge-comision';
+
                 tbody.innerHTML += `
                     <tr>
-                        <td>${a.nombre}</td>
+                        <td><strong>${a.nombre}</strong></td>
                         <td>${a.seccion}</td>
                         <td><span class="status-badge ${badgeClass}">${a.estado}</span></td>
-                        <td><button style="background:none;border:none;color:var(--danger);cursor:pointer;" onclick="eliminarAlumno(${a.id})"><i class="fa-solid fa-trash"></i></button></td>
+                        <td style="text-align: center;">
+                            <button style="background:none; border:none; color:var(--danger); cursor:pointer; font-size:16px;" onclick="eliminarAlumno(${a.id})">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -213,16 +260,31 @@
         }
 
         async function exportarParte() {
-            if(listaGuardiamarinas.length === 0) return alert("No hay alumnos en la lista para exportar");
-            const filename = document.getElementById('fileName').value;
+            if (listaGuardiamarinas.length === 0) {
+                alert("La lista nominal está vacía. Añada personal antes de exportar.");
+                return;
+            }
+            const filename = document.getElementById('fileName').value.trim() || 'Parte_General_Brigada';
+            const statusBox = document.getElementById('statusBox');
+
+            statusBox.style.display = "block";
+            statusBox.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando con el motor de cuadre y generando archivo...';
 
             try {
                 const response = await fetch('/api/parte/procesar-y-exportar', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ nombre_archivo: filename, guardiamarinas: listaGuardiamarinas })
+                    body: JSON.stringify({ 
+                        nombre_archivo: filename, 
+                        brigada: listaGuardiamarinas 
+                    })
                 });
-                if (!response.ok) throw new Error("Error en servidor");
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || "Error en el servidor");
+                }
+
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -231,8 +293,12 @@
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
+
+                statusBox.style.display = "none";
             } catch (e) {
-                alert("Ocurrió un error al procesar el archivo Excel.");
+                statusBox.style.background = "#fee2e2";
+                statusBox.style.color = "#991b1b";
+                statusBox.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Error: ${e.message}`;
             }
         }
     </script>
