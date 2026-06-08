@@ -2,6 +2,9 @@ import io
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
 from pydantic import BaseModel, Field
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -12,7 +15,11 @@ app = FastAPI(
     description="Backend para el conteo, control nominal y exportación del parte militar.",
     version="1.0.0"
 )
+templates = Jinja2Templates(directory="templates")
 
+@app.get("/", response_class=HTMLResponse)
+async def leer_tablero(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 # --- CONFIGURACIÓN DE CONSTANTES MILITARES ---
 SECCIONES_VALIDAS = [
     "Primer Año Alfa", "Primer Año Bravo", "Primer Año Charlie", "Primer Año Delta", "Primer Año Echo",
