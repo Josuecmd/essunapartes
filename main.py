@@ -15,11 +15,15 @@ app = FastAPI(
     description="Backend para el conteo, control nominal y exportación del parte militar.",
     version="1.0.0"
 )
-templates = Jinja2Templates(directory="templates")
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 @app.get("/", response_class=HTMLResponse)
 async def leer_tablero(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
 # --- CONFIGURACIÓN DE CONSTANTES MILITARES ---
 SECCIONES_VALIDAS = [
     "Primer Año Alfa", "Primer Año Bravo", "Primer Año Charlie", "Primer Año Delta", "Primer Año Echo",
